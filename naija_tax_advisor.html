@@ -1,0 +1,155 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Naija Tax Advisor</title>
+  <style>
+    body { background: #FFFFFF; color: #008000; font-family: Arial, sans-serif; margin: 0; padding: 10px; text-align: center; }
+    h1, h2, h3 { color: #008000; }
+    .card { border-radius: 10px; background: linear-gradient(#f0fff0, #e0ffe0); padding: 15px; margin: 10px auto; max-width: 300px; box-shadow: 0 2px 5px rgba(0,128,0,0.2); }
+    .form { padding: 20px; background: #f0fff0; border-radius: 10px; max-width: 400px; margin: 0 auto; }
+    input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #008000; border-radius: 5px; }
+    button { background: #008000; color: #FFFFFF; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 10px 0; }
+    input[type="range"] { accent-color: #008000; }
+    footer { font-size: 0.75em; color: #555; margin-top: 20px; }
+    .hidden { display: none; }
+    nav { position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-around; background: #f0fff0; padding: 10px; border-top: 1px solid #008000; }
+    a { color: #008000; text-decoration: none; }
+    canvas { max-width: 100%; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div id="login" class="form">
+    <h1>Naija Tax Advisor</h1>
+    <p>Welcome back! Please enter your details.</p>
+    <input type="text" placeholder="Email or Username">
+    <input type="password" placeholder="Password">
+    <a href="#">Forgot Password?</a>
+    <button onclick="showScreen('home')">Login</button>
+    <p>Or continue with</p>
+    <p>New to Naija Tax Advisor? <a href="#" onclick="showScreen('signup')">Sign Up</a></p>
+  </div>
+
+  <div id="signup" class="form hidden">
+    <h1>Naija Tax Advisor</h1>
+    <h2>Sign Up</h2>
+    <input type="text" placeholder="Full Name">
+    <input type="email" placeholder="Email">
+    <input type="password" placeholder="Password">
+    <input type="password" placeholder="Confirm Password">
+    <button onclick="showScreen('home')">Sign Up</button>
+    <p>Or continue with</p>
+    <p>Already have an account? <a href="#" onclick="showScreen('login')">Login</a></p>
+  </div>
+
+  <div id="home" class="hidden">
+    <h1>Naija Tax Advisor</h1>
+    <h2>Sample Calculations</h2>
+    <div id="calculationsList"></div>
+    <h3>Income vs. Tax Progression</h3>
+    <canvas id="taxChart"></canvas>
+  </div>
+
+  <div id="calculator" class="form hidden">
+    <h1>Naija Tax Advisor</h1>
+    <h2>Calculate Your Tax</h2>
+    <label>Annual Income (NGN)</label>
+    <input type="range" id="incomeInput" min="0" max="100000000" value="1000000">
+    <p>₦<span id="incomeValue">1,000,000</span></p>
+    <p>₦0 - ₦100,000,000</p>
+    <button id="calculateButton">Calculate Tax</button>
+    <p>Tax Liability (NGN) <br> <span id="taxOutput">₦0</span></p>
+    <p>Status <br> <span id="statusOutput">Exempt</span></p>
+    <footer>Based on 2026 PIT brackets: 0% up to ₦800k, 15% ₦800k-₦3M, 18% ₦3M-₦12M, 21% ₦12M-₦25M, 23% ₦25M-₦50M, 25% above ₦50M. Estimates only—consult FIRS.</footer>
+  </div>
+
+  <div id="settings" class="hidden">
+    <h1>Naija Tax Advisor</h1>
+    <h2>Settings</h2>
+    <h3>Profile Management</h3>
+    <p><span>person</span> Edit Profile <span>chevron_right</span></p>
+    <p><span>history</span> View Past Reports <span>chevron_right</span></p>
+    <h3>Preferences</h3>
+    <p><span>notifications</span> Notifications: Tax updates & reminders</p>
+    <p><span>palette</span> App Theme: Current: Green & White <span>chevron_right</span></p>
+    <h3>About</h3>
+    <p><span>info</span> About Us <span>chevron_right</span></p>
+    <p><span>help_outline</span> Help & FAQ <span>chevron_right</span></p>
+  </div>
+
+  <div id="reportSent" class="hidden">
+    <h2>Report Sent!</h2>
+    <p>Your tax report has been successfully sent to your email.</p>
+    <button onclick="showScreen('home')">OK</button>
+  </div>
+
+  <nav class="hidden" id="navBar">
+    <a href="#" onclick="showScreen('home')">home Home</a>
+    <a href="#" onclick="showScreen('calculator')">calculate Calculator</a>
+    <a href="#" onclick="showScreen('settings')">settings Settings</a>
+  </nav>
+
+  <script>
+    const WEB_APP_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE'; // Replace with your deployed URL
+
+    function showScreen(screenId) {
+      document.querySelectorAll('div').forEach(d => d.classList.add('hidden'));
+      document.getElementById(screenId).classList.remove('hidden');
+      document.getElementById('navBar').classList.remove('hidden');
+    }
+
+    document.getElementById('incomeInput').addEventListener('input', function() {
+      document.getElementById('incomeValue').textContent = this.value.toLocaleString();
+    });
+
+    document.getElementById('calculateButton').addEventListener('click', function() {
+      const income = parseFloat(document.getElementById('incomeInput').value) || 0;
+      const email = prompt('Enter your email for the tax report:');
+      if (!email) return;
+      fetch(`${WEB_APP_URL}?income=${income}&email=${email}`, { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById('taxOutput').textContent = `₦${data.tax.toLocaleString()}`;
+          document.getElementById('statusOutput').textContent = data.status;
+          showScreen('reportSent');
+          loadHomeData(); // Refresh home list
+        })
+        .catch(error => alert('Error: ' + error));
+    });
+
+    function loadHomeData() {
+      fetch(WEB_APP_URL)
+        .then(response => response.json())
+        .then(data => {
+          const list = document.getElementById('calculationsList');
+          list.innerHTML = '';
+          data.incomes.forEach((inc, i) => {
+            const card = document.createElement('div');
+            card.classList.add('card');
+            card.innerHTML = `${data.statuses[i]}<br>Income: ₦${inc.toLocaleString()}<br>Tax: ₦${data.taxes[i].toLocaleString()}`;
+            list.appendChild(card);
+          });
+          drawChart(data.incomes, data.taxes);
+        });
+    }
+
+    function drawChart(incomes, taxes) {
+      const ctx = document.getElementById('taxChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: incomes.map(i => `₦${(i/1000000).toFixed(1)}M`),
+          datasets: [{ label: 'Tax', data: taxes, backgroundColor: '#008000' }]
+        },
+        options: { scales: { y: { beginAtZero: true } } }
+      });
+    }
+
+    // Initial load
+    document.addEventListener('DOMContentLoaded', loadHomeData);
+  </script>
+</body>
+</html>
